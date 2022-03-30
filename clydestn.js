@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clyde STN
 // @namespace    http://stnpdapp.rail.nsw.gov.au:5555/stn
-// @version      0.2
+// @version      0.4
 // @description  Load Clyde NWB Maintenance Windows on STN Online
 // @author       Jonathan Lam
 // @match        http://stnpdapp.rail.nsw.gov.au:5555/*
