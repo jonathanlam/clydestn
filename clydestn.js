@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clyde STN
 // @namespace    http://stnpdapp.rail.nsw.gov.au:5555/stn
-// @version      0.3
+// @version      0.2
 // @description  Load Clyde NWB Maintenance Windows on STN Online
 // @author       Jonathan Lam
 // @match        http://stnpdapp.rail.nsw.gov.au:5555/*
@@ -78,19 +78,37 @@ const weekend_numbers = [' 16', ' 17', ' 14', ' 21', ' 22', ' 23'];
 
 $("#nightthisbtn").click(function(e) {
     e.preventDefault();
-    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdate()+'&endDate='+enddate()+'&selecteditems=Proforma&searchBoxText=';
     mwsearch(url1, night_shift_numbers);
 });
 
 $("#daythisbtn").click(function(e) {
     e.preventDefault();
-    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdate()+'&endDate='+enddate()+'&selecteditems=Proforma&searchBoxText=';
     mwsearch(url1, day_shift_numbers);
 });
 
 $("#wethisbtn").click(function(e) {
     e.preventDefault();
-    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdate()+'&endDate='+enddate()+'&selecteditems=Proforma&searchBoxText=';
+    mwsearch(url1, weekend_numbers);
+});
+
+$("#nightnextbtn").click(function(e) {
+    e.preventDefault();
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdatenextweek()+'&endDate='+enddatenextweek()+'&selecteditems=Proforma&searchBoxText=';
+    mwsearch(url1, night_shift_numbers);
+});
+
+$("#daynextbtn").click(function(e) {
+    e.preventDefault();
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdatenextweek()+'&endDate='+enddatenextweek()+'&selecteditems=Proforma&searchBoxText=';
+    mwsearch(url1, day_shift_numbers);
+});
+
+$("#wenextbtn").click(function(e) {
+    e.preventDefault();
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdatenextweek()+'&endDate='+enddatenextweek()+'&selecteditems=Proforma&searchBoxText=';
     mwsearch(url1, weekend_numbers);
 });
 
@@ -112,16 +130,36 @@ function filter_response(res, mw_numbers) {
   return data;
 }
 
-function todaysDate() {
-    var d = new Date();
+function nextDay(x){
+    // x=0 is Sunday
+    // x=1 is Monday
+    var now = new Date();
+    var delta = (x+(7-now.getDay())) % 7;
+    if (delta == 0) delta = 7;
+    now.setDate(now.getDate() + delta);
+    return now;
+}
+
+function startdate() {
+    var d = nextDay(7);
+    var res = d.setTime(d.getTime() - (7 * 24 * 60 * 60 * 1000));
+    d = new Date(res);
     return format_date(d);
 }
 
-function nextweekDate() {
-    var date = new Date();
-    var res = date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
-    var d = new Date(res);
+function enddate() {
+    return format_date(nextDay(7));
+}
 
+function startdatenextweek() {
+    var d = nextDay(1);
+    return format_date(d);
+}
+
+function enddatenextweek() {
+    var d = nextDay(7);
+    var res = d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000));
+    d = new Date(res);
     return format_date(d);
 }
 
@@ -141,8 +179,6 @@ function format_date(d) {
 }
 
 function mwsearch(url1, mw_numbers) {
-	
-
 	$.ajax({
 		type : 'post',
 		url : url1,
