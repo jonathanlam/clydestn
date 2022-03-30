@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clyde STN
 // @namespace    http://stnpdapp.rail.nsw.gov.au:5555/stn
-// @version      0.2
+// @version      0.3
 // @description  Load Clyde NWB Maintenance Windows on STN Online
 // @author       Jonathan Lam
 // @match        http://stnpdapp.rail.nsw.gov.au:5555/*
@@ -33,57 +33,87 @@ function loopfunc() {
 
 function run() {
 'use strict';
-$("#searchControllerDiv").before("<button class='btn btn-clyde' id='mwsearchbtn'>Search Clyde MW</button>");
 
-$("#mwsearchbtn").click(function(e) {
+
+var html_buttons = `
+<table style="width: 100%">
+  <tr>
+  <td>Clyde Night Shift</td>
+  <td>Clyde Day Shift</td>
+  <td>Clyde Weekends</td>
+  </tr>
+<tr>
+  <td>
+    <div class="btn-toolbar" role="toolbar">
+    <div class="btn-group" role="group">
+    <button id="nightthisbtn" type="button" class="btn btn-clyde">This Week</button>
+    <button id="nightnextbtn" type="button" class="btn btn-clyde">Next Week</button>
+    </div>
+    </div>
+  </td>
+  <td>
+    <div class="btn-toolbar" role="toolbar">
+    <div class="btn-group" role="group">
+    <button id="daythisbtn" type="button" class="btn btn-clyde">This Week</button>
+    <button id="daynextbtn" type="button" class="btn btn-clyde">Next Week</button>
+    </div>
+    </div>
+  </td>
+  <td>
+    <div class="btn-toolbar" role="toolbar">
+    <div class="btn-group" role="group">
+    <button id="wethisbtn" type="button" class="btn btn-clyde">This Week</button>
+    <button id="wenextbtn" type="button" class="btn btn-clyde">Next Week</button>
+    </div>
+    </div>
+  </td>
+</tr>
+</table>`;
+
+$("#searchControllerDiv").before(html_buttons);
+
+const night_shift_numbers = [' 08', ' 09', ' 12', ' 24'];
+const day_shift_numbers = [' 06', ' 07', ' 25', ' 26'];
+const weekend_numbers = [' 16', ' 17', ' 14', ' 21', ' 22', ' 23'];
+
+$("#nightthisbtn").click(function(e) {
     e.preventDefault();
-    mwsearch();
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+    mwsearch(url1, night_shift_numbers);
 });
 
-function search_or(repl, keywords) {
-    // given a sentence repl and a list of words/array keywords
-    // this will return true of the keyword is detected in repl
-    for (word in keywords) {
-        if (typeof keywords[word] == 'string') {
-            if (repl.toLowerCase().includes(keywords[word]))
-                return true;
-        } else {
-            if (search_and(repl, keywords[word]))
-                return true;
-        }          
-    }
-    return false;
+$("#daythisbtn").click(function(e) {
+    e.preventDefault();
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+    mwsearch(url1, day_shift_numbers);
+});
+
+$("#wethisbtn").click(function(e) {
+    e.preventDefault();
+    var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+    mwsearch(url1, weekend_numbers);
+});
+
+
+
+function searchlist(str, l) {
+    if (!(str.includes('MW'))) return false;
+    return l.some(function(num) {
+        return str.includes(num);
+    });
 }
 
-function search_and(repl, keywords) {
-    // given a sentence repl and a list of words keywords
-    for (word in keywords) {
-        if (typeof keywords[word] == 'string') {
-            if (!(repl.toLowerCase().includes(keywords[word])))
-                return false;
-        } else {
-            if (!(search_or(repl, keywords[word])))
-                return false;
-        }  
-    }
-    return true;
-}
-
-const night_shift_numbers = ['08', '09', '12', '24'];
-const day_shift_numbers = ['06', '07', '25', '26'];
-const weekend_numbers = ['16', '17', '14', '21'];
-
-function filter_response(res) {
-  data = [];
+function filter_response(res, mw_numbers) {
+  var data = [];
   res.forEach(function (stn) {
-    if (search_and('MW', night_shift_numbers))
+    if (searchlist(stn.title, mw_numbers))
       data.push(stn);
   });
   return data;
 }
 
 function todaysDate() {
-    var d = new Date(),
+    var d = new Date();
     return format_date(d);
 }
 
@@ -102,16 +132,16 @@ function format_date(d) {
         day = '' + d.getDate(),
         year = d.getFullYear();
 
-    if (month.length < 2) 
+    if (month.length < 2)
         month = '0' + month;
-    if (day.length < 2) 
+    if (day.length < 2)
         day = '0' + day;
 
     return [day, month, year].join('-');
 }
 
-function mwsearch() {
-	var url1 = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate=28-03-2022&endDate=03-04-2022&selecteditems=Proforma&searchBoxText=';
+function mwsearch(url1, mw_numbers) {
+	
 
 	$.ajax({
 		type : 'post',
@@ -164,7 +194,7 @@ function mwsearch() {
 										},
 
 								],
-								data : filter_response(response),
+								data : filter_response(response, mw_numbers),
 								iconSet : "fontAwesome",
 								idPrefix : "g1_",
 								rownumbers : true,
