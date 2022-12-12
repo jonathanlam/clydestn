@@ -258,7 +258,7 @@ function mwsearch(url1, mw_numbers) {
 }
 
 function filtered_stn_data() {
-    var url = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdate()+'&endDate='+enddate()+'&selecteditems=Proforma&searchBoxText=';
+    var url = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdate()+'&endDate=31-12-2023&selecteditems=Proforma&searchBoxText=';
     $.ajax({
         type : 'post',
         url : url,
