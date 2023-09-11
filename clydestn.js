@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clyde STN
 // @namespace    http://stnpdapp.rail.nsw.gov.au:5555/stn
-// @version      0.5
+// @version      1.0
 // @description  Load Clyde NWB Maintenance Windows on STN Online
 // @author       Jonathan Lam
 // @match        http://stnpdapp.rail.nsw.gov.au:5555/*
@@ -72,7 +72,7 @@ var html_buttons = `
 
 $("#searchControllerDiv").before(html_buttons);
 
-const night_shift_numbers = [' 08', ' 09', ' 10', ' 12', ' 24'];
+const night_shift_numbers = [' 08', ' 09', ' 12', ' 24'];
 const day_shift_numbers = [' 06', ' 07', ' 25', ' 26'];
 const weekend_numbers = [' 16', ' 17', ' 14', ' 21', ' 22', ' 23'];
 
@@ -179,98 +179,123 @@ function format_date(d) {
 }
 
 function mwsearch(url1, mw_numbers) {
+	$.ajax({
+		type : 'post',
+		url : url1,
+		dataType : "json",
+		success : function(response) {
+			document.getElementById("filter").style.display = "none";
+			document.getElementById("validStart").style.display = "none";
+			document.getElementById("NoRecordSTNDiv").style.display = "none";
+			document.getElementById("searchControllerDiv").style.display = "block";
+			$("#grid1").jqGrid("GridUnload");
+			$("#grid1").jqGrid(
+							{
+								colModel : [
+										{
+											name : "name",
+											label : "STN",
+											width : 80,
+											formatter : formateLink
+										},
+										{
+											name : "title",
+											label : "Title",
+											width : 760,
+											formatter : formatetitleLink
+										},
+										{
+											name : "contents",
+											label : "Contents",
+											width : 185
+										},
+										{
+											name : "startDate",
+											label : "Start Date",
+											width : 80,
+											align: "right"
+										},
+										{
+											name : "endDate",
+											label : "End Date",
+											width : 80,
+											align: "right"
+										},
+										{
+											name : "vide",
+											label : "Vide",
+											width : 80,
+											formatter : formateLink1,
+											align: "right"
+										},
+
+								],
+								data : filter_response(response, mw_numbers),
+								iconSet : "fontAwesome",
+								idPrefix : "g1_",
+								rownumbers : true,
+								sortname : "invdate",
+								sortorder : "desc",
+								caption : "Recently Published Daily STN",
+								threeStateSort : true,
+								sortIconsBeforeText : true,
+								headertitles : true,
+								toppager : true,
+								pager : true,
+								width : 1300,
+								height : 450,
+								shrinkToFit : false,
+								rowNum : 20,
+							});
+
+		},
+		error : function() {
+			document.getElementById("searchControllerDiv").style.display = "none";
+			document.getElementById("NoRecordSTNDiv").style.display = "block";
+
+		}
+	});
+}
+
+function filtered_stn_data() {
+    var url = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+format_date(new Date())+'&endDate=31-12-2023&selecteditems=Proforma&searchBoxText=';
+    console.log(url);
     $.ajax({
-        type : 'post',
-        url : url1,
-        dataType : "json",
-        success : function(response) {
-            document.getElementById("filter").style.display = "none";
-            document.getElementById("validStart").style.display = "none";
-            document.getElementById("NoRecordSTNDiv").style.display = "none";
-            document.getElementById("searchControllerDiv").style.display = "block";
-            $("#grid1").jqGrid("GridUnload");
-            $("#grid1").jqGrid(
-                            {
-                                colModel : [
-                                        {
-                                            name : "name",
-                                            label : "STN",
-                                            width : 80,
-                                            formatter : formateLink
-                                        },
-                                        {
-                                            name : "title",
-                                            label : "Title",
-                                            width : 760,
-                                            formatter : formatetitleLink
-                                        },
-                                        {
-                                            name : "contents",
-                                            label : "Contents",
-                                            width : 185
-                                        },
-                                        {
-                                            name : "startDate",
-                                            label : "Start Date",
-                                            width : 80,
-                                            align: "right"
-                                        },
-                                        {
-                                            name : "endDate",
-                                            label : "End Date",
-                                            width : 80,
-                                            align: "right"
-                                        },
-                                        {
-                                            name : "vide",
-                                            label : "Vide",
-                                            width : 80,
-                                            formatter : formateLink1,
-                                            align: "right"
-                                        },
-
-                                ],
-                                data : filter_response(response, mw_numbers),
-                                iconSet : "fontAwesome",
-                                idPrefix : "g1_",
-                                rownumbers : true,
-                                sortname : "invdate",
-                                sortorder : "desc",
-                                caption : "Recently Published Daily STN",
-                                threeStateSort : true,
-                                sortIconsBeforeText : true,
-                                headertitles : true,
-                                toppager : true,
-                                pager : true,
-                                width : 1300,
-                                height : 450,
-                                shrinkToFit : false,
-                                rowNum : 20,
-                            });
-
-        },
-        error : function() {
-            document.getElementById("searchControllerDiv").style.display = "none";
-            document.getElementById("NoRecordSTNDiv").style.display = "block";
-
+		type : 'post',
+		url : url,
+		dataType : "json",
+		success : function(response) {
+            post_data(response);
         }
     });
 }
 
-function filtered_stn_data() {
-    var url = 'SearchSTNController?action=findByLocation&action1=findByCustomer&locationList=&customerList=&startDate='+startdate()+'&endDate=31-12-2023&selecteditems=Proforma&searchBoxText=';
+function post_data(stn_data) {
+    //var stn_data = filtered_stn_data();
+    console.log(stn_data)
+
+    var url = "https://jonathanlamao.com/stn/new";
     $.ajax({
-        type : 'post',
-        url : url,
-        dataType : "json",
-        success : function(response) {
-            post_data(response);
+		type : 'POST',
+		url : url,
+		dataType : "json",
+        contentType: "application/json",
+        data: JSON.stringify(stn_data),
+		success : function(response) {
+            console.log(response);
+            upload_stn_list(response);
+			//document.getElementById("cout").innerHTML = response;
+        },
+        error : function(response) {
+			//document.getElementById("cout").innerHTML = JSON.stringify(response);
         }
     });
 }
 
 function upload_stn_list(stn_list) {
     stn_list.forEach(function(pdffilename) {
+        var url_prefetch = "http://stnpdapp.rail.nsw.gov.au:5555/stn//STNServ?documentNo=" + pdffilename.replace(".pdf", "");
+        fetch(url_prefetch);
         var url = "http://stnpdapp.rail.nsw.gov.au:5555//stn/pdfs/" + pdffilename;
         console.log(url);
         fetch(url)
@@ -285,7 +310,7 @@ function upload_stn_list(stn_list) {
               fd.append('data', blob);
               $.ajax({
                   type: 'POST',
-                  url: 'https://wpp.ngoandsons.com.au/api/stn/upload?f='+pdffilename,
+                  url: 'https://jonathanlamao.com/stn/upload?f='+pdffilename,
                   data: fd,
                   processData: false,
                   contentType: false
@@ -296,25 +321,6 @@ function upload_stn_list(stn_list) {
     });
 }
 
-function post_data(stn_data) {
-    //var stn_data = filtered_stn_data();
 
-    var url = "http://wpp.ngoandsons.com.au/api/stn/new";
-    $.ajax({
-        type : 'POST',
-        url : url,
-        dataType : "json",
-        contentType: "application/json",
-        data: JSON.stringify(stn_data),
-        success : function(response) {
-            console.log(response);
-            upload_stn_list(response);
-            //document.getElementById("cout").innerHTML = response;
-        },
-        error : function(response) {
-            //document.getElementById("cout").innerHTML = JSON.stringify(response);
-        }
-    });
-}
 filtered_stn_data()
 };
